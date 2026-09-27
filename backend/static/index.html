@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TaskFlow Pro — Dependency-Aware Workflow & DAG Scheduling Engine with AI-powered suggestions">
+    <title>TaskFlow Pro — DAG Workflow Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script>
+        (function() {
+            const saved = localStorage.getItem('taskflow_theme');
+            const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            const theme = saved ? saved : (prefersLight ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="app-header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">
+                    <span class="material-symbols-outlined" style="font-size:16px;color:white;">bolt</span>
+                </div>
+                <h1>TaskFlow <span class="logo-accent">Pro</span></h1>
+            </div>
+            <div class="header-tabs">
+                <button class="tab-btn active" data-view="board" id="tab-board">
+                    <span class="material-symbols-outlined icon-sm">dashboard</span> Board
+                </button>
+                <button class="tab-btn" data-view="dag" id="tab-dag">
+                    <span class="material-symbols-outlined icon-sm">account_tree</span> DAG View
+                </button>
+                <button class="tab-btn" data-view="critical" id="tab-critical">
+                    <span class="material-symbols-outlined icon-sm">local_fire_department</span> Critical Path
+                </button>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="theme-toggle-btn" id="btn-theme-toggle" title="Switch theme" aria-label="Toggle light and dark mode">
+                <span class="material-symbols-outlined icon-sm" id="theme-icon">light_mode</span>
+                <span id="theme-text">Light</span>
+            </button>
+            <button class="btn btn-ghost" id="btn-what-if" title="What-If Simulator">
+                <span class="material-symbols-outlined icon-sm">science</span> What-If
+            </button>
+            <button class="btn btn-primary" id="btn-new-task">
+                <span class="material-symbols-outlined icon-sm">add</span> New Task
+            </button>
+        </div>
+    </header>
+
+    <!-- Health Dashboard -->
+    <div class="health-dashboard" id="health-dashboard">
+        <div class="metric-card" id="metric-blocked">
+            <div class="metric-icon blocked-icon">
+                <span class="material-symbols-outlined">block</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="val-blocked">0</span>
+                <span class="metric-label">Blocked</span>
+            </div>
+        </div>
+        <div class="metric-card" id="metric-ready">
+            <div class="metric-icon ready-icon">
+                <span class="material-symbols-outlined">check_circle</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="val-ready">0</span>
+                <span class="metric-label">Ready</span>
+            </div>
+        </div>
+        <div class="metric-card" id="metric-done">
+            <div class="metric-icon done-icon">
+                <span class="material-symbols-outlined">task_alt</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="val-done">0</span>
+                <span class="metric-label">Completed</span>
+            </div>
+        </div>
+        <div class="metric-card" id="metric-cp">
+            <div class="metric-icon cp-icon">
+                <span class="material-symbols-outlined">local_fire_department</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="val-cp">0d</span>
+                <span class="metric-label">Critical Path</span>
+            </div>
+        </div>
+        <div class="metric-card" id="metric-deps">
+            <div class="metric-icon deps-icon">
+                <span class="material-symbols-outlined">link</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="val-deps">0</span>
+                <span class="metric-label">Dependencies</span>
+            </div>
+        </div>
+        <div class="metric-card bottleneck" id="metric-bottleneck">
+            <div class="metric-icon bottleneck-icon">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="val-bottleneck">—</span>
+                <span class="metric-label">Top Bottleneck</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        <!-- Kanban Board View -->
+        <div class="view-board active" id="view-board">
+            <div class="kanban-board" id="kanban-board">
+                <div class="kanban-column" data-column="backlog" id="col-backlog">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <span class="column-dot backlog"></span>
+                            <h2>Backlog</h2>
+                            <span class="column-count" id="count-backlog">0</span>
+                        </div>
+                    </div>
+                    <div class="column-body" id="body-backlog"></div>
+                </div>
+                <div class="kanban-column" data-column="in_progress" id="col-in-progress">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <span class="column-dot in-progress"></span>
+                            <h2>In Progress</h2>
+                            <span class="column-count" id="count-in_progress">0</span>
+                        </div>
+                    </div>
+                    <div class="column-body" id="body-in_progress"></div>
+                </div>
+                <div class="kanban-column" data-column="review" id="col-review">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <span class="column-dot review"></span>
+                            <h2>Review</h2>
+                            <span class="column-count" id="count-review">0</span>
+                        </div>
+                    </div>
+                    <div class="column-body" id="body-review"></div>
+                </div>
+                <div class="kanban-column" data-column="done" id="col-done">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <span class="column-dot done"></span>
+                            <h2>Done</h2>
+                            <span class="column-count" id="count-done">0</span>
+                        </div>
+                    </div>
+                    <div class="column-body" id="body-done"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DAG View -->
+        <div class="view-dag" id="view-dag">
+            <canvas id="dag-canvas"></canvas>
+        </div>
+
+        <!-- Critical Path View -->
+        <div class="view-critical" id="view-critical">
+            <div class="critical-path-container" id="critical-path-container">
+                <div class="cp-empty">Loading critical path...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Task Detail / Create Modal -->
+    <div class="modal-overlay" id="modal-overlay" style="display:none">
+        <div class="modal" id="task-modal">
+            <div class="modal-header">
+                <h2 id="modal-title">New Task</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="input-title">Title</label>
+                    <input type="text" id="input-title" placeholder="Task title..." maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label for="input-desc">Description</label>
+                    <textarea id="input-desc" rows="3" placeholder="What does this task involve?"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="input-start">Start Date</label>
+                        <input type="date" id="input-start">
+                    </div>
+                    <div class="form-group">
+                        <label for="input-end">End Date</label>
+                        <input type="date" id="input-end">
+                    </div>
+                    <div class="form-group">
+                        <label for="input-duration">Duration (days)</label>
+                        <input type="number" id="input-duration" min="1" value="1">
+                    </div>
+                </div>
+
+                <!-- Dependencies Section -->
+                <div class="form-group">
+                    <label>Dependencies (prerequisites)</label>
+                    <div class="deps-list" id="deps-list">
+                        <span class="deps-empty">No dependencies</span>
+                    </div>
+                    <div class="dep-add-row">
+                        <select id="dep-select">
+                            <option value="">Add prerequisite...</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline" id="btn-add-dep">
+                            <span class="material-symbols-outlined icon-sm">add</span> Add
+                        </button>
+                    </div>
+                    <div class="dep-error-banner" id="dep-error-banner" style="display:none"></div>
+                </div>
+
+                <!-- AI Suggestions -->
+                <div class="ai-section" id="ai-section">
+                    <button class="btn btn-ai" id="btn-ai-suggest">
+                        <span class="material-symbols-outlined icon-sm">auto_awesome</span>
+                        AI Suggest Dependencies
+                    </button>
+                    <div class="ai-suggestions" id="ai-suggestions" style="display:none">
+                        <div class="ai-header">
+                            <span><span class="material-symbols-outlined icon-sm" style="vertical-align:-3px">psychology</span> AI Suggestions</span>
+                            <span class="ai-model" id="ai-model"></span>
+                        </div>
+                        <div class="ai-list" id="ai-list"></div>
+                        <div class="ai-disclaimer">
+                            Suggestions require your approval. The DAG engine validates all accepted dependencies.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="btn-modal-cancel">Cancel</button>
+                <button class="btn btn-danger" id="btn-modal-delete" style="display:none">
+                    <span class="material-symbols-outlined icon-sm">delete</span> Delete
+                </button>
+                <button class="btn btn-primary" id="btn-modal-save">
+                    <span class="material-symbols-outlined icon-sm">save</span> Save Task
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- What-If Modal -->
+    <div class="modal-overlay" id="whatif-overlay" style="display:none">
+        <div class="modal modal-wide" id="whatif-modal">
+            <div class="modal-header">
+                <h2><span class="material-symbols-outlined" style="vertical-align:-4px;margin-right:6px">science</span>What-If Scenario Simulator</h2>
+                <button class="modal-close" id="whatif-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="whatif-task">Select Task</label>
+                        <select id="whatif-task"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="whatif-end">New End Date</label>
+                        <input type="date" id="whatif-end">
+                    </div>
+                    <div class="form-group" style="align-self:flex-end">
+                        <button class="btn btn-primary" id="btn-whatif-run">
+                            <span class="material-symbols-outlined icon-sm">play_arrow</span> Simulate
+                        </button>
+                    </div>
+                </div>
+                <div class="whatif-results" id="whatif-results">
+                    <div class="whatif-empty">Select a task and adjust its end date to preview the cascade effect.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="btn-whatif-cancel">Close</button>
+                <button class="btn btn-primary" id="btn-whatif-apply" style="display:none">
+                    <span class="material-symbols-outlined icon-sm">check</span> Apply Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/dag-canvas.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
