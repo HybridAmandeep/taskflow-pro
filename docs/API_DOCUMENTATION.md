@@ -1,6 +1,6 @@
 # REST API Documentation — TaskFlow Pro
 
-TaskFlow Pro exposes a comprehensive, RESTful JSON API powered by FastAPI.
+TaskFlow Pro exposes a comprehensive, RESTful JSON API powered by **FastAPI**.
 When running locally, interactive documentation is accessible at:
 - **Swagger UI:** `http://localhost:8000/docs`
 - **ReDoc:** `http://localhost:8000/redoc`
@@ -98,17 +98,17 @@ Move a task across columns or change its position within a column. Automatically
 * **Allowed Columns:** `"backlog"`, `"in_progress"`, `"review"`, `"done"`
 
 ### 1.6 Delete Task
-Deletes a task and removes any associated dependency edges.
+Deletes a task and all associated dependencies.
 * **Method:** `DELETE`
 * **Path:** `/api/tasks/{task_id}`
-* **Response:** `200 OK` (`{"message": "Task deleted successfully"}`)
+* **Response:** `204 No Content`
 
 ---
 
 ## 2. Dependencies API (`/api/dependencies`)
 
-### 2.1 List Dependencies
-Get all dependency edges currently registered in the DAG.
+### 2.1 List All Dependencies
+Lists every directed edge in the DAG.
 
 * **Method:** `GET`
 * **Path:** `/api/dependencies`
@@ -138,64 +138,63 @@ Creates a directed dependency edge: `upstream_task_id` must finish before `downs
   "source": "manual"
 }
 ```
-
-#### Cycle Protection (Kahn's Algorithm):
-If the edge introduces a circular dependency (e.g., A → B → C → A), the request is rejected with `409 Conflict`.
+* **Success Response:** `201 Created`
+* **Cycle Conflict Response:** `409 Conflict`
 ```json
 {
-  "detail": "Adding this dependency would create a circular relationship: task-001 -> task-002 -> task-004 -> task-001. The dependency was rejected and the graph remains unchanged."
+  "detail": "Adding dependency from task-007 to task-001 would create a circular relationship (task-001 -> task-002 -> task-004 -> task-007 -> task-001). Graph remains unchanged."
 }
 ```
 
-### 2.3 Remove Dependency
+### 2.3 Delete Dependency
 * **Method:** `DELETE`
-* **Path:** `/api/dependencies/{dependency_id}`
-* **Response:** `200 OK`
+* **Path:** `/api/dependencies/{dep_id}`
+* **Response:** `204 No Content`
 
 ---
 
-## 3. DAG Engine & Scheduling Analysis (`/api/dag`)
+## 3. DAG Analytics & Scheduling API (`/api/dag`)
 
-### 3.1 Get Critical Path
-Identifies the longest path in the workflow using dynamic programming over topological order.
-
-* **Method:** `GET`
-* **Path:** `/api/dag/critical-path`
-* **Response:**
-```json
-{
-  "path": ["task-001", "task-002", "task-004", "task-007", "task-009", "task-010"],
-  "total_duration": 18,
-  "task_titles": [
-    "Define Product Requirements",
-    "Design Database Schema",
-    "Implement User Auth API",
-    "Integrate Auth with Frontend",
-    "Perform Security Audit",
-    "Deploy to Production"
-  ]
-}
-```
-
-### 3.2 Get Health Dashboard Metrics
-Returns real-time health indicators of the project graph.
+### 3.1 Health Metrics
+Provides aggregate health indicators for the project graph.
 
 * **Method:** `GET`
 * **Path:** `/api/dag/health`
-* **Response:**
+* **Response Example:**
 ```json
 {
   "total_tasks": 10,
   "completed_tasks": 2,
-  "blocked_count": 4,
-  "ready_count": 2,
-  "in_progress_count": 2,
-  "critical_path_length": 6,
+  "blocked_count": 3,
+  "ready_count": 5,
+  "critical_path_length": 4,
+  "critical_path_duration": 14,
   "bottlenecks": [
     {
-      "task_id": "task-002",
-      "task_title": "Design Database Schema",
-      "downstream_count": 2
+      "task_id": "task-004",
+      "task_title": "Implement User Auth API",
+      "dependent_count": 2
+    }
+  ]
+}
+```
+
+### 3.2 Critical Path
+Calculates the sequence of dependent tasks that determines the minimum project duration.
+
+* **Method:** `GET`
+* **Path:** `/api/dag/critical-path`
+* **Response Example:**
+```json
+{
+  "critical_path": ["task-001", "task-002", "task-004", "task-007", "task-009", "task-010"],
+  "total_duration_days": 18,
+  "tasks": [
+    {
+      "id": "task-001",
+      "title": "Define Product Requirements",
+      "duration_days": 3,
+      "column": "done"
     }
   ]
 }
@@ -238,7 +237,7 @@ Simulate how delaying or shifting an upstream task cascades downstream through t
 ## 4. AI Dependency Suggestions (`/api/ai`)
 
 ### 4.1 Suggest Dependencies
-Uses NVIDIA NIM to analyze project tasks and suggest logical prerequisites.
+Uses Google Gemini (`gemini-3.8-flash`) to analyze project tasks and suggest logical prerequisites.
 
 * **Method:** `POST`
 * **Path:** `/api/ai/suggest-dependencies`
@@ -266,7 +265,7 @@ Uses NVIDIA NIM to analyze project tasks and suggest logical prerequisites.
       "reasoning": "Integration tests require the REST API endpoints to be in place."
     }
   ],
-  "model_used": "deepseek-ai/deepseek-r1",
+  "model_used": "gemini-3.8-flash",
   "prompt_summary": "Analyzed 9 existing tasks to find prerequisites for 'Write Integration Tests'."
 }
 ```
@@ -286,7 +285,17 @@ All API errors return standard FastAPI JSON payloads:
 |:---|:---|
 | `200 OK` | Successful retrieval or update |
 | `201 Created` | Successful creation of a task or dependency |
+| `204 No Content` | Successful deletion |
 | `400 Bad Request` | Invalid input or dates |
 | `404 Not Found` | Specified Task or Dependency ID does not exist |
 | `409 Conflict` | Circular dependency detected via Kahn's topological sort |
 | `500 Internal Error` | Unhandled server error |
+
+---
+
+## 6. Related Documentation
+
+- 📖 [Documentation Index](README.md)
+- 🚀 [Deployment Guide](DEPLOYMENT.md)
+- 🤖 [Gemini AI Setup Guide](GEMINI_SETUP.md)
+- 🏗️ [System Architecture](ARCHITECTURE.md)

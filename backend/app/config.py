@@ -7,12 +7,8 @@ load_dotenv()
 class Settings:
     PROJECT_NAME: str = "TaskFlow Pro"
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./taskflow.db")
-
-    # NVIDIA NIM API (OpenAI-compatible)
-    NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
-    NVIDIA_BASE_URL: str = os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1")
-    NVIDIA_MODEL: str = os.getenv("NVIDIA_MODEL", "deepseek-ai/deepseek-r1")
-
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",
         "http://localhost:3000",

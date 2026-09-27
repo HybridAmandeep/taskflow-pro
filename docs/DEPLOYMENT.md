@@ -1,6 +1,6 @@
 # Deployment Guide — TaskFlow Pro
 
-This guide explains how to take your TaskFlow Pro instance and make it available online for public or team access.
+This guide explains how to deploy and host your TaskFlow Pro instance for public, team, or cloud access.
 
 ---
 
@@ -9,7 +9,7 @@ This guide explains how to take your TaskFlow Pro instance and make it available
 TaskFlow Pro is a unified single-service application:
 - **Backend:** Python + FastAPI + SQLAlchemy 2.0 (async) + SQLite
 - **Frontend:** Vanilla HTML5, CSS3, and modern JavaScript served directly by FastAPI from `backend/static/`
-- **AI Engine:** NVIDIA NIM (DeepSeek R1) via OpenAI-compatible API
+- **AI Engine:** Google Gemini (`gemini-3.8-flash`) via `google-genai`
 - **Database:** Self-contained SQLite database (`taskflow.db`) automatically initialized and seeded on first run
 
 Because the frontend is bundled and served directly by FastAPI, you only need to deploy **one single container or web service**.
@@ -33,19 +33,14 @@ Render provides free hosting for Python web services with automatic HTTPS and co
 
 ### Step 1: Push your project to GitHub
 
-If your project is not yet on GitHub:
-
 ```bash
 cd taskflow-pro
 
-# Initialize git repository
-git init
+# Initialize git repository if not already done
 git add .
-git commit -m "Initial commit for TaskFlow Pro"
+git commit -m "Configure TaskFlow Pro for deployment"
 
-# Set main branch and push
-git branch -M main
-git remote add origin https://github.com/<your-username>/taskflow-pro.git
+# Push to your GitHub repo
 git push -u origin main
 ```
 
@@ -71,8 +66,8 @@ Scroll down to the **Environment Variables** section and add:
 
 | Key | Value | Description |
 |:---|:---|:---|
-| `NVIDIA_API_KEY` | `nvapi-...` | Your NVIDIA NIM API key from [build.nvidia.com](https://build.nvidia.com) |
-| `NVIDIA_MODEL` | `deepseek-ai/deepseek-r1` | The model identifier |
+| `GEMINI_API_KEY` | `your_api_key_here` | Your Google AI Studio API key (`AIzaSy...` or `AQ...`) |
+| `GEMINI_MODEL` | `gemini-3.8-flash` | The Gemini model identifier |
 | `PYTHON_VERSION` | `3.11.9` | Ensures Python 3.11 runtime |
 
 ### Step 4: Deploy
@@ -96,8 +91,8 @@ docker build -t taskflow-pro .
 
 # Run the container
 docker run -d -p 8000:8000 \
-  -e NVIDIA_API_KEY="nvapi-your-key-here" \
-  -e NVIDIA_MODEL="deepseek-ai/deepseek-r1" \
+  -e GEMINI_API_KEY="your_api_key_here" \
+  -e GEMINI_MODEL="gemini-3.8-flash" \
   --name taskflow taskflow-pro
 ```
 
@@ -113,7 +108,7 @@ Access the app at `http://localhost:8000`.
    ```
 4. Set secrets:
    ```bash
-   fly secrets set NVIDIA_API_KEY="nvapi-your-key-here"
+   fly secrets set GEMINI_API_KEY="your_key_here" GEMINI_MODEL="gemini-3.8-flash"
    ```
 5. Deploy:
    ```bash
@@ -131,15 +126,15 @@ Access the app at `http://localhost:8000`.
    - **Root Directory:** `/backend`
    - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 5. In **Variables**, add:
-   - `NVIDIA_API_KEY`: *Your NVIDIA NIM API Key*
-   - `NVIDIA_MODEL`: `deepseek-ai/deepseek-r1`
+   - `GEMINI_API_KEY`: *Your Gemini API Key*
+   - `GEMINI_MODEL`: `gemini-3.8-flash`
 6. In **Settings** → **Networking**, click **Generate Domain** to get a public URL (`https://...up.railway.app`).
 
 ---
 
 ## Option 4: Instant Public Access via Cloudflare Tunnel (No Hosting Required)
 
-If you already have TaskFlow Pro running on your machine and want to share it with someone online right now:
+If you have TaskFlow Pro running on your machine and want to share it with someone online immediately:
 
 ### Using Cloudflare Try (Zero Config):
 
@@ -156,7 +151,6 @@ If you already have TaskFlow Pro running on your machine and want to share it wi
    ```
    https://random-assigned-name.trycloudflare.com
    ```
-   Anyone with this link can interact with your live application!
 
 ### Using ngrok:
 
@@ -171,8 +165,8 @@ ngrok http 8000
 | Variable | Default Value | Required | Description |
 |:---|:---|:---|:---|
 | `DATABASE_URL` | `sqlite+aiosqlite:///./taskflow.db` | No | SQLAlchemy database connection string. |
-| `NVIDIA_API_KEY` | `""` | No | API key from [build.nvidia.com](https://build.nvidia.com). AI features are disabled if omitted. |
-| `NVIDIA_MODEL` | `deepseek-ai/deepseek-r1` | No | Model identifier from NVIDIA API Catalog. |
+| `GEMINI_API_KEY` | `""` | No | API key from Google AI Studio. AI features are disabled if omitted. |
+| `GEMINI_MODEL` | `gemini-3.8-flash` | No | Gemini model identifier (default: `gemini-3.8-flash`). |
 | `PORT` | `8000` | No | HTTP port used by cloud providers (automatically set by Render/Railway). |
 
 ---
@@ -180,13 +174,22 @@ ngrok http 8000
 ## Troubleshooting
 
 ### 1. "No API key configured" on AI Dependency Suggestions
-- Verify that `NVIDIA_API_KEY` is added to your cloud environment variables.
-- Ensure the key begins with `nvapi-` from [build.nvidia.com](https://build.nvidia.com).
+- Verify that `GEMINI_API_KEY` is added to your cloud environment variables.
+- Ensure the key begins with `AIzaSy` or `AQ` from [Google AI Studio](https://aistudio.google.com/app/apikey).
 - Restart the web service after adding new environment variables.
 
 ### 2. Changes reset after server restart (Render Free Tier)
 - Render Free Tier spins down after 15 minutes of inactivity and disk writes are ephemeral.
-- To persist data permanently across free tier restarts, configure a cloud PostgreSQL database or attach a persistent Render disk on paid plans.
+- To persist data permanently across free tier restarts, configure a cloud PostgreSQL database or attach a persistent Render disk.
 
 ### 3. Static files or CSS not loading
 - Verify that the start command runs with `app.main:app` and that the `static/` directory is located next to `app/` in `backend/`.
+
+---
+
+## Related Documentation
+
+- 📖 [Documentation Index](README.md)
+- 📡 [REST API Documentation](API_DOCUMENTATION.md)
+- 🤖 [Gemini AI Setup Guide](GEMINI_SETUP.md)
+- 🏗️ [System Architecture](ARCHITECTURE.md)

@@ -1,228 +1,188 @@
 # TaskFlow Pro — Dependency-Aware Workflow & DAG Scheduling Engine
 
-A production-grade Kanban board powered by a **DAG (Directed Acyclic Graph)** scheduling engine, featuring AI-augmented dependency suggestions, critical path visualization, and a "What-If" scenario simulator.
+TaskFlow Pro is a production-grade Kanban board powered by a **DAG (Directed Acyclic Graph)** scheduling engine, featuring AI-augmented dependency suggestions via **Google Gemini**, critical path visualization, and a "What-If" schedule simulator.
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green) ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat&logo=fastapi&logoColor=white)
+![Gemini](https://img.shields.io/badge/Google%20Gemini-gemini--3.8--flash-4285F4?style=flat&logo=google&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue?style=flat)
 
 ---
 
-## Features
+## 🌟 Key Features
 
 | Feature | Description |
-|---------|-------------|
-| **Kanban Board** | 4-column drag-and-drop board (Backlog, In Progress, Review, Done) |
-| **DAG Engine** | Cycle detection, schedule propagation, blocked/ready status computation |
-| **No Compounding** | Diamond dependencies propagate correctly (A->B->D + A->C->D = +3 not +6) |
-| **Rollback Cascading** | Moving a Done task back re-evaluates all downstream statuses |
-| **AI Suggestions** | NVIDIA NIM-powered dependency suggestions with confidence scores |
-| **Critical Path** | Longest dependency chain visualization |
-| **What-If Simulator** | Preview schedule cascade before committing changes |
-| **Health Dashboard** | Live metrics: blocked count, critical path, bottleneck detection |
-| **Persistence** | SQLite database — state survives browser refresh |
-
-## Tech Stack
-
-- **Backend:** Python, FastAPI, SQLAlchemy 2.0, SQLite
-- **Frontend:** Vanilla HTML/CSS/JS (served by FastAPI)
-- **AI:** NVIDIA NIM API (DeepSeek R1 via OpenAI-compatible endpoint)
-- **Styling:** Custom design system with Dark & Light modes (solid corporate colors)
+|:---|:---|
+| **Interactive Kanban Board** | 4-column drag-and-drop workflow (Backlog, In Progress, Review, Done) with strict sequential sorting. |
+| **Deterministic DAG Engine** | Pure Python topological sorting, cycle detection, and schedule propagation. |
+| **No Compounding Bug** | Diamond dependencies correctly calculate $\max(\text{shifts})$ across parallel branches rather than summing delays. |
+| **Rollback Cascading** | Moving a Done task backwards dynamically recalculates readiness and marks dependent tasks as blocked. |
+| **AI Dependency Suggestions** | Context-grounded recommendations using **Google Gemini** (`gemini-3.8-flash`) with confidence scores and reasoning. |
+| **Critical Path Analysis** | Highlights the project bottleneck chain using reverse topological dynamic programming. |
+| **What-If Schedule Simulator** | Interactive slider/date preview showing exact downstream ripple effects before committing changes. |
+| **Graph Health Dashboard** | Real-time counts of blocked tasks, completed tasks, bottleneck nodes, and critical path metrics. |
+| **State Persistence** | Backed by SQLite (`aiosqlite`) — survive browser reloads and server restarts. |
 
 ---
 
-## Documentation
+## 📚 Documentation Hub
 
-- 🚀 **[Deployment Guide](docs/DEPLOYMENT.md)** — Step-by-step instructions to take this app online (Render, Railway, Docker, Cloudflare).
-- 📡 **[REST API Documentation](docs/API_DOCUMENTATION.md)** — Complete endpoint references, request/response payloads, and DAG algorithms.
-- 🤖 **[NVIDIA NIM AI Setup Guide](docs/NVIDIA_NIM_SETUP.md)** — Guide to getting an API key and configuring AI suggestions.
+All technical documentation is organized in the [`docs/`](docs/) directory:
+
+- 📖 **[Documentation Hub](docs/README.md)** — Master index and guide to editing documentation.
+- 🏗️ **[Architecture & Design](docs/ARCHITECTURE.md)** — In-depth graph algorithms, data models, and system design.
+- 📡 **[REST API Reference](docs/API_DOCUMENTATION.md)** — Complete endpoint specs, schemas, payloads, and status codes.
+- 🚀 **[Deployment Guide](docs/DEPLOYMENT.md)** — Instructions for Render.com, Docker, Railway, Fly.io, and Cloudflare.
+- 🤖 **[Gemini AI Setup Guide](docs/GEMINI_SETUP.md)** — Step-by-step key acquisition, model config, and guardrails.
+- 🛡️ **[AI Tool Declaration](AI_TOOL_DECLARATION.md)** — Development and runtime AI usage and safety disclosures.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.11+
-- pip
+- Python 3.11 or higher
+- pip (Python package manager)
 
-### Setup
+### 1. Clone & Install
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/taskflow-pro.git
-cd taskflow-pro/backend
+git clone https://github.com/HybridAmandeep/taskflow-pro.git
+cd taskflow-pro
 
 # Install dependencies
-pip install -r requirements.txt
-
-# (Optional) Add your NVIDIA NIM API key for AI features
-# Edit .env and set NVIDIA_API_KEY=nvapi-your-key-here
-
-# Run the application
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+pip install -r backend/requirements.txt
 ```
 
-Open **http://localhost:8000** in your browser.
+### 2. Configure Environment
 
-The database is created automatically on first run with 10 seeded tasks and 13 dependencies.
+Copy the example environment file:
+```bash
+cp .env.example backend/.env
+```
 
-### Running Tests
+To enable AI dependency suggestions, add your free Google AI Studio key in `backend/.env`:
+```env
+DATABASE_URL=sqlite+aiosqlite:///./taskflow.db
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-3.8-flash
+```
+*(If no API key is provided, the application runs normally with AI suggestions disabled).*
+
+### 3. Start the Server
 
 ```bash
 cd backend
-python app/tests/test_dag_engine.py
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+Visit **`http://localhost:8000`** in your browser.
+
+The database initializes automatically on first run with 10 realistic software engineering tasks and 13 dependencies modeling diamond paths and convergence points.
 
 ---
 
-## Seed Data
+## 🧪 Running Tests
 
-10 realistic tasks modeling a software project lifecycle:
+### Run Unit Tests (DAG Engine)
+```bash
+cd backend
+python -m pytest app/tests/test_dag_engine.py
+```
+*(All 22 unit tests verify cycle detection, Kahn's algorithm, BFS schedule propagation, critical path DP, and diamond non-compounding).*
+
+---
+
+## 🎯 Realistic Seed Data
+
+The seeded project models a modern software development lifecycle:
 
 ```
 1. Define Product Requirements (Done)
-2. Design Database Schema (Done)        -> depends on 1
-3. Set Up CI/CD Pipeline (In Progress)  -> depends on 1
-4. Implement User Auth API (In Progress)-> depends on 2
-5. Build REST API Endpoints (In Prog.)  -> depends on 2
-6. Create Frontend Component Library (Review) -> depends on 1
-7. Integrate Auth with Frontend (Backlog) -> depends on 4, 6  (diamond)
-8. Write Integration Tests (Backlog)    -> depends on 4, 5
-9. Perform Security Audit (Backlog)     -> depends on 7, 8  (diamond)
-10. Deploy to Production (Backlog)      -> depends on 3, 9  (convergence)
+├── 2. Design Database Schema (Done)
+│   ├── 4. Implement User Auth API (In Progress) ──────┐
+│   │   ├── 7. Integrate Auth with Frontend (Backlog) ─┼── 9. Security Audit ── 10. Deploy to Prod
+│   │   └── 8. Write Integration Tests (Backlog) ─────┤
+│   └── 5. Build REST API Endpoints (In Progress) ─────┘
+└── 3. Set Up CI/CD Pipeline (In Progress) ──────────────────────────────────── 10. Deploy to Prod
+6. Create Frontend Component Library (Review) ───────── 7. Integrate Auth
 ```
 
-This data demonstrates:
-- Diamond dependencies (tasks 7 and 9)
-- Multiple convergence points (task 10)
-- Various chain depths for critical path testing
+This graph provides:
+- **Diamond Dependencies:** Tasks 7 and 9 test parallel path convergence.
+- **Multiple Entry Points:** Tasks 1 and 6 start independent tracks.
+- **Critical Path Chains:** Tests the longest execution sequence to task 10.
 
 ---
 
-## AI / LLM Integration
+## 🤖 AI / LLM Guardrails & Governance
 
-### Model
-NVIDIA NIM (DeepSeek R1) via the OpenAI-compatible API at `integrate.api.nvidia.com/v1`.
+TaskFlow Pro adheres to strict AI safety principles:
 
-### How It Works
-1. User clicks "AI Suggest Dependencies" in the task edit modal
-2. System sends all existing tasks + target task to NVIDIA NIM with a structured prompt
-3. The model returns suggested prerequisites with confidence scores (0-100) and reasoning
-4. User reviews and explicitly accepts or rejects each suggestion
-5. Accepted suggestions pass through cycle detection before persistence
-
-### Hallucination Prevention
-- **Context grounding:** Only existing task IDs are valid — LLM cannot invent tasks
-- **Server-side validation:** All suggested IDs are checked against the database
-- **Cycle detection:** Accepted suggestions are validated by the DAG engine
-- **Confidence threshold:** Only suggestions >= 40% confidence are shown
-- **Structured output:** JSON schema enforced to prevent free-text hallucination
-- **Human-in-the-loop:** ALL suggestions require explicit user approval
-
-### Without API Key
-The app works fully without an NVIDIA API key. AI features gracefully show "No API key configured" — all other features remain functional.
+1. **Context Grounding:** The model is provided only with tasks in the current project. Hallucinating fictional task IDs is strictly prohibited.
+2. **Server-Side Verification:** Every suggested ID is cross-checked against database records; invalid IDs are dropped.
+3. **Cycle Rejection:** AI suggestions cannot introduce circular dependencies; every edge must pass Kahn's algorithm before saving.
+4. **Mandatory Human-in-the-Loop:** Suggestions are advisory cards. The user must explicitly click **"Accept"**.
+5. **Confidence Filter:** Recommendations with confidence under 40% are discarded.
 
 ---
 
-## Key Algorithms
-
-### Cycle Detection — Kahn's Algorithm
-- Before adding any edge, temporarily insert it and run topological sort via in-degree counting
-- If unvisited nodes remain after the sort, a cycle exists -> reject with clear error
-- O(V + E) time complexity
-
-### Schedule Propagation — BFS with No Compounding
-- When an upstream task shifts by N days, BFS walks all downstream nodes
-- `max_shift` map tracks the maximum shift arriving at each node from any path
-- Each node shifts by `max(delta from all incoming paths)`, not the sum
-- Prevents the diamond compounding bug (A->B->D + A->C->D = +N, not +2N)
-
-### Blocked/Ready Status
-- Computed at query time, never stored
-- A task is READY if all upstream dependencies are in DONE column
-- A task is BLOCKED if any upstream dependency is not DONE
-- Re-evaluated on every state change
-
-### Critical Path — Longest Path via DP
-- Process nodes in reverse topological order
-- `longest_path[node] = duration[node] + max(longest_path[successor])`
-- Backtrack to extract the full chain
-
----
-
-## API Reference
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/tasks` | List all tasks with computed status |
-| POST | `/api/tasks` | Create a new task |
-| PUT | `/api/tasks/{id}` | Update task details |
-| PATCH | `/api/tasks/{id}/move` | Move task to different column |
-| DELETE | `/api/tasks/{id}` | Delete task and dependencies |
-| GET | `/api/dependencies` | List all dependency edges |
-| POST | `/api/dependencies` | Add dependency (cycle-checked) |
-| DELETE | `/api/dependencies/{id}` | Remove dependency |
-| GET | `/api/dag/critical-path` | Get critical path |
-| GET | `/api/dag/health` | Health dashboard metrics |
-| POST | `/api/dag/what-if` | Simulate date change preview |
-| POST | `/api/ai/suggest-dependencies` | AI-powered suggestions |
-
-Full interactive docs available at `/docs` (Swagger UI).
-
----
-
-## Key Assumptions and Limitations
-
-### Assumptions
-- **Single-user / small-team:** No real-time multi-user sync via WebSockets. Designed for individual or small team use where concurrent writes are rare.
-- **Calendar days:** All scheduling uses calendar days. No business day or holiday awareness.
-- **Task scale:** Optimized for 10-200 tasks per board. SQLite handles this without performance issues.
-- **Sequential execution:** Critical path assumes tasks execute sequentially along dependency chains. No parallelism modeling within a single chain.
-- **AI is advisory only:** AI suggestions never auto-apply. Human approval and DAG validation are mandatory.
-
-### Limitations
-- **No authentication:** The app runs in demo mode without user login. All users share the same board.
-- **No WebSocket real-time sync:** Changes by one user aren't pushed to others in real-time. Manual refresh shows the latest state.
-- **AI requires internet:** The NVIDIA NIM API call needs internet access. Without a valid API key, AI features degrade gracefully.
-- **No undo/redo in v1:** DAG snapshot table exists in the schema but undo/redo UI is not implemented in this sprint.
-- **No timezone awareness:** All dates are naive (no timezone information).
-- **Canvas DAG view:** The DAG visualization uses a simple canvas renderer. For very large graphs (200+ nodes), a force-directed layout library like React Flow would be better.
-
----
-
-## Project Structure
+## 📂 Project Structure
 
 ```
 taskflow-pro/
-  backend/
-    app/
-      main.py             # FastAPI entry point
-      config.py            # Settings & env vars
-      database.py          # Async SQLAlchemy setup
-      models.py            # SQLAlchemy models (Task, Dependency, DAGSnapshot)
-      schemas.py           # Pydantic request/response schemas
-      dag_engine.py        # Core DAG algorithms (pure Python, no DB deps)
-      dag_helpers.py       # DB-to-DAGEngine bridge
-      ai_service.py        # NVIDIA NIM integration
-      seed.py              # 10 seeded tasks + 13 dependencies
-      routes/
-        tasks.py           # Task CRUD + movement
-        dependencies.py    # Dependency CRUD + DAG analysis
-        ai.py              # AI suggestion endpoint
-      tests/
-        test_dag_engine.py # 17 unit tests
-    static/
-      index.html           # Main HTML page
-      css/styles.css        # Dark theme + glassmorphism
-      js/
-        api.js              # Fetch-based API client
-        dag-canvas.js       # Canvas-based DAG renderer
-        app.js              # Main app logic + interactions
-    .env                    # Environment variables
-    requirements.txt        # Python dependencies
-  README.md                 # This file
+├── .env.example              # Template environment configuration
+├── .gitignore                # Cleaned & comprehensive git ignore rules
+├── AI_TOOL_DECLARATION.md    # Transparent declaration of AI tooling
+├── Dockerfile                # Production multi-stage Docker container
+├── README.md                 # Primary project overview (this file)
+├── render.yaml               # Infrastructure-as-code for Render.com
+│
+├── docs/                     # Central Documentation Hub
+│   ├── README.md             # Documentation index & editing standards
+│   ├── ARCHITECTURE.md       # Graph theory, data models & system design
+│   ├── API_DOCUMENTATION.md  # Complete REST API reference
+│   ├── DEPLOYMENT.md         # Cloud & Docker deployment workflows
+│   └── GEMINI_SETUP.md       # Google Gemini AI configuration guide
+│
+└── backend/                  # Backend application & static UI
+    ├── .env                  # Local environment file (ignored by git)
+    ├── .env.example          # Backend-specific environment template
+    ├── requirements.txt      # Python dependencies
+    │
+    ├── app/                  # Application source code
+    │   ├── main.py           # FastAPI entrypoint & static mount
+    │   ├── config.py         # Pydantic/dotenv settings loader
+    │   ├── database.py       # Async SQLAlchemy database session
+    │   ├── models.py         # Task, Dependency & DAGSnapshot models
+    │   ├── schemas.py        # Pydantic request/response schemas
+    │   ├── dag_engine.py     # Pure algorithmic DAG engine (no DB deps)
+    │   ├── dag_helpers.py    # Bridge between SQLAlchemy and DAGEngine
+    │   ├── ai_service.py     # Google Gemini API client & guardrails
+    │   ├── seed.py           # Initial 10 tasks & 13 dependencies
+    │   │
+    │   ├── routes/           # REST API endpoints
+    │   │   ├── tasks.py          # CRUD & Kanban column transitions
+    │   │   ├── dependencies.py   # Dependency edges & DAG analysis
+    │   │   └── ai.py             # AI suggestion trigger endpoint
+    │   │
+    │   └── tests/            # Test suite
+    │       ├── test_dag_engine.py      # 22 pure unit tests for DAG engine
+    │       └── test_api_requirements.py# API requirements integration suite
+    │
+    └── static/               # Frontend single-page application
+        ├── index.html        # Semantic HTML5 Kanban & canvas layout
+        ├── css/
+        │   └── styles.css    # Responsive dark/light theme CSS tokens
+        └── js/
+            ├── api.js        # REST API client
+            ├── dag-canvas.js # Interactive HTML5 Canvas graph visualizer
+            └── app.js        # Kanban board controller & state management
 ```
 
 ---
 
-## License
+## 📄 License
 
-MIT
+This project is licensed under the **MIT License**.
