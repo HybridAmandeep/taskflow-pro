@@ -22,7 +22,7 @@ We designed the architecture, built the features, handled implementation, and ma
 
 We used Google Gemini to help pull the project documentation together. 
 
-We started by writing out all the project details ourselves—its goals, functionality, architecture, tech stack, and implementation steps. Gemini took our raw notes and helped format and organize the final document.
+We started by writing out all the project details ourselves-its goals, functionality, architecture, tech stack, and implementation steps. Gemini took our raw notes and helped format and organize the final document.
 
 Gemini only handled the presentation, phrasing, formatting, and layout. All the actual technical explanations and project details came straight from us.
 
