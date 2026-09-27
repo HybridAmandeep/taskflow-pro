@@ -103,7 +103,7 @@ The seeded project models a modern software development lifecycle:
 ├── 2. Design Database Schema (Done)
 │   ├── 4. Implement User Auth API (In Progress) ──────┐
 │   │   ├── 7. Integrate Auth with Frontend (Backlog) ─┼── 9. Security Audit ── 10. Deploy to Prod
-│   │   └── 8. Write Integration Tests (Backlog) ─────┤
+│   │   └── 8. Write Integration Tests (Backlog) ──────┤
 │   └── 5. Build REST API Endpoints (In Progress) ─────┘
 └── 3. Set Up CI/CD Pipeline (In Progress) ──────────────────────────────────── 10. Deploy to Prod
 6. Create Frontend Component Library (Review) ───────── 7. Integrate Auth
