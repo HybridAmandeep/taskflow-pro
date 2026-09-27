@@ -9,6 +9,7 @@ Welcome to the TaskFlow Pro documentation repository. This directory organizes a
 | Document | Topic | Description |
 |:---|:---|:---|
 | **[Architecture & Design](ARCHITECTURE.md)** | Core Engineering | Graph theory algorithms (Kahn's, BFS, Critical Path), database models, and system components. |
+| **[Testing & Reliability](TESTING_AND_RELIABILITY.md)** | QA & Known Failure Cases | Test suites (22 unit tests, 4 invariant tests) and catalog of 12 known failure cases & mitigations. |
 | **[REST API Reference](API_DOCUMENTATION.md)** | Integration & API | Complete endpoint specs, schemas, payloads, error formats, and status codes. |
 | **[Deployment Guide](DEPLOYMENT.md)** | DevOps & Hosting | How to host on Render.com, Docker, Railway.app, Fly.io, and Cloudflare tunnels. |
 | **[Gemini AI Setup Guide](GEMINI_SETUP.md)** | AI Configuration | Obtaining keys, configuring `gemini-3.8-flash`, guardrails, and troubleshooting. |

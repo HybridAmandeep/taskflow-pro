@@ -31,6 +31,7 @@ All technical documentation is organized in the [`docs/`](docs/) directory:
 
 - 📖 **[Documentation Hub](docs/README.md)** — Master index and guide to editing documentation.
 - 🏗️ **[Architecture & Design](docs/ARCHITECTURE.md)** — In-depth graph algorithms, data models, and system design.
+- 🧪 **[Testing & Reliability (Known Failure Cases)](docs/TESTING_AND_RELIABILITY.md)** — Complete test coverage, QA strategy, and catalog of 12 known failure cases & mitigations.
 - 📡 **[REST API Reference](docs/API_DOCUMENTATION.md)** — Complete endpoint specs, schemas, payloads, and status codes.
 - 🚀 **[Deployment Guide](docs/DEPLOYMENT.md)** — Instructions for Render.com, Docker, Railway, Fly.io, and Cloudflare.
 - 🤖 **[Gemini AI Setup Guide](docs/GEMINI_SETUP.md)** — Step-by-step key acquisition, model config, and guardrails.
