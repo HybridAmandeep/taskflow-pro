@@ -1,57 +1,65 @@
-# AI Tool Declaration — TaskFlow Pro
+# AI Tool Declaration – TaskFlow Pro
 
-This document transparently declares the artificial intelligence (AI) and Large Language Model (LLM) tools utilized within TaskFlow Pro, covering both runtime in-product features and development assistance tools, as well as the governance and guardrail mechanisms in place.
+## 1. AI Integration: Google Gemini
 
----
+TaskFlow Pro runs on Google Gemini (`gemini-3.8-flash`) via the official `google-genai` SDK. It powers our intelligent task dependency suggestions. The AI reads your project data to figure out how tasks relate to each other and suggests prerequisites on the fly.
 
-## 1. In-Product AI Feature: Google Gemini (`gemini-3.8-flash`)
+### How It Works
 
-### Purpose & Role
-TaskFlow Pro integrates **Google Gemini** (`gemini-3.8-flash`) via the official Google GenAI SDK (`google-genai`) to provide an intelligent dependency suggestion engine.
+Hit the AI Suggest Dependencies button. The app gathers your task titles, descriptions, statuses, and current links, then fires that data off to Google Gemini with clear instructions. 
 
-### Operational Workflow
-1. **User Initiation:** When editing a task, the user can explicitly trigger AI assistance by clicking **"✨ AI Suggest Dependencies"**.
-2. **Context Assembly:** The system extracts existing task titles, descriptions, statuses, and existing dependency pairs from the database.
-3. **Structured Prompting:** The backend prompts Gemini with strict context grounding and schema requirements.
-4. **Structured Response:** Gemini responds with structured JSON containing proposed prerequisites, calibrated confidence scores (0–100%), and reasoning sentences.
-5. **Deterministic Filtering:** The backend validates every proposed task ID against the database, filters out suggestions below a 40% confidence threshold, and ensures no duplicate edges are proposed.
-6. **Strict Human-in-the-Loop:** Suggestions are advisory only. No dependency is ever automatically applied. A user must review each suggestion and click **"Accept"** or **"Dismiss"**.
-7. **DAG Integrity Check:** Accepted suggestions pass through Kahn's algorithm cycle detection before being written to SQLite.
+Gemini processes the request and sends back suggested dependencies as JSON, complete with confidence scores and short explanations. 
 
-### Hallucination & Risk Mitigation Guardrails
-- **Context Grounding:** The prompt forbids the model from inventing fictional task IDs or dependencies.
-- **Server-Side Validation:** The backend cross-checks all proposed task IDs against existing database entities; ungrounded IDs are silently discarded.
-- **Cycle Prevention:** Algorithmic cycle detection (Tarjan/Kahn) prevents any suggestion from introducing graph deadlocks.
-- **Confidence Calibration:** Low-confidence inferences (<40%) are suppressed to reduce noise.
-- **Graceful Degradation:** If `GEMINI_API_KEY` is omitted or invalid, the core application and DAG scheduling engine remain 100% operational.
+The backend handles the heavy lifting next. It checks the suggestions against the database, strips out duplicates, and drops anything scoring below 40% confidence. 
 
----
+Nothing happens automatically. You review every single suggestion, choosing what to accept and what to ignore. Once you accept a dependency, the app runs Kahn's algorithm to catch any loops and keep the Directed Acyclic Graph (DAG) intact.
 
-## 2. Development Assistance: Google Antigravity IDE & Pair Programming
+### Safety and Validation
 
-### Tools Used
-- **Google Antigravity IDE** (AI pair programming environment)
-- **Advanced LLM Models** for code synthesis, architectural evaluation, refactoring, and documentation authoring.
+Bad AI suggestions are frustrating. We built safeguards to stop them:
 
-### Scope of Assistance
-- Scaffolded FastAPI router architecture and SQLAlchemy 2.0 async schemas.
-- Implemented and unit-tested pure Python DAG algorithms (cycle detection, BFS schedule propagation, reverse-topological critical path calculation).
-- Authored responsive UI styling with modern CSS custom properties and interactive HTML5 Canvas visualization.
-- Drafted test suites, API documentation, deployment blueprints, and environment configurations.
+* Strict grounding: Gemini only uses real task data and valid task IDs.
+* Backend validation: Fake IDs and duplicate links get instantly tossed.
+* Cycle detection: Graph algorithms block circular dependencies before they break things.
+* Confidence filtering: Anything under 40% confidence gets thrown away.
+* Human approval: You have the final say on every single link.
+* Independent operation: If the Gemini API goes down, the core app and scheduler keep right on running.
 
-### Human Verification & Oversight
-- Every generated code component, mathematical graph algorithm, and schema definition was scrutinized, tested, and verified.
-- Unit tests (`app/tests/test_dag_engine.py`) ensure algorithmic correctness independently of AI generation.
-- Zero black-box AI logic is used in core scheduling: cycle detection, topological ordering, and critical path calculations are 100% deterministic algorithms.
+## 2. AI Tools Used During Development
 
----
+We built TaskFlow Pro with help from Google Antigravity IDE and advanced Large Language Models (LLMs). 
 
-## 3. Summary of Governance & Safety
+They carried a lot of weight during code generation, architecture planning, debugging, refactoring, writing docs, and testing.
 
-| Area | Implementation |
-|:---|:---|
-| **Core Scheduling** | 100% deterministic (Kahn's algorithm, BFS, Dynamic Programming) |
-| **AI Suggestion Engine** | Google Gemini (`gemini-3.8-flash`) |
-| **Model Interaction** | Context-grounded prompts, JSON response parsing, ID validation |
-| **Human Decision-Making** | 100% human-in-the-loop (mandatory explicit acceptance) |
-| **Data Privacy** | Only task titles and descriptions are shared with Google GenAI API; no proprietary user credentials or secrets are transmitted |
+Here is where the AI stepped in:
+
+* Scaffolding the initial FastAPI backend and SQLAlchemy 2.0 async database models.
+* Writing graph algorithms for cycle detection, schedule propagation, and critical path calculations.
+* Designing responsive user interfaces alongside an interactive HTML5 Canvas visualizer.
+* Drafting automated tests, API documentation, deployment configs, and environment files.
+
+### Human Verification
+
+AI code is never pushed blindly. A human developer reviewed, edited, and tested every line before it made it into the project.
+
+We use an automated test suite in `app/tests/test_dag_engine.py` to double-check the math and logic behind our graph algorithms.
+
+Once the app is running, the core scheduling engine doesn't rely on AI at all. It uses purely deterministic code—topological sorting, Breadth-First Search (BFS), and Dynamic Programming.
+
+## 3. AI Governance and Data Privacy
+
+TaskFlow Pro sticks to a strict human-in-the-loop model. AI suggestions never alter your project structure without your direct sign-off.
+
+We keep the AI on a tight leash using structured prompts, JSON parsing, database checks, confidence cutoffs, and graph-based cycle detection. 
+
+Your task data only goes to Google Gemini when you actively click to get suggestions. We make sure credentials and secrets never get sent to the API.
+
+The scheduling engine and the AI suggestion feature are completely decoupled. If Gemini drops offline or errors out, you can still manage tasks, build dependencies, and run schedules without missing a beat.
+
+## 4. Summary
+
+AI pulls double duty in TaskFlow Pro. It gives users smart dependency suggestions, and it helped developers build the app faster in the first place.
+
+Google Gemini handles optional recommendations. Meanwhile, rock-solid, deterministic graph algorithms take care of the actual scheduling, validation, and critical path math.
+
+You stay in the driver's seat. Every AI suggestion waits for your green light before changing a single thing in your project workflow.
